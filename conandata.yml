@@ -1,0 +1,8 @@
+sources:
+  "20190524":
+    url: https://github.com/FreeYourSoul/FSeam/archive/b818d24c55ed72e33ca111491b01080a8e2ffe9c.tar.gz
+    sha256: 4659815a5c70face7cf438c7d0611feefdd44d7635a38d7e05db0c23df84a40a
+patches:
+  "20190524":
+    patch_file: "patches/0001-Clean-up-CMake-and-install-Python-files-to-bin.patch"
+    base_path: "source_subfolder"

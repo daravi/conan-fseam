@@ -1,0 +1,100 @@
+From b0262fed049795d8092b6eb0cb6383c2e1d34cab Mon Sep 17 00:00:00 2001
+From: Puya Daravi <puya@motionmetrics.com>
+Date: Thu, 6 Aug 2020 00:17:44 -0700
+Subject: [PATCH 1/1] Clean up CMake and install Python files to bin
+
+---
+ CMakeLists.txt | 60 +++++++++++++++++++++++---------------------------
+ 1 file changed, 28 insertions(+), 32 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 75bbbd8..dae4a65 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -18,7 +18,7 @@ configure_file (
+         "${CMAKE_CURRENT_SOURCE_DIR}/FSeam/Versioner.hh.in"
+         "${CMAKE_CURRENT_SOURCE_DIR}/FSeam/Versioner.hh")
+ 
+-message(STATUS "FSeam v${FSEAM_VERSION}")
++message(STATUS "${PROJECT_NAME} v${FSEAM_VERSION}")
+ 
+ set(FSEAM_HEADERS
+         ${CMAKE_CURRENT_SOURCE_DIR}/FSeam/FSeam.hpp
+@@ -28,47 +28,43 @@ set(FSEAM_GENERATOR_PYTH
+         ${CMAKE_CURRENT_SOURCE_DIR}/Generator/FSeamerFile.py
+         ${CMAKE_CURRENT_SOURCE_DIR}/Generator/CppHeaderParser.py)
+         
+-
+-foreach (target FSeam FSeam-static)
+-  add_library(${target} INTERFACE)
+-  target_include_directories(${target} INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/FSeam/>
+-                                                 $<INSTALL_INTERFACE:include>)
+-endforeach()
++add_library(${PROJECT_NAME} INTERFACE)
++target_include_directories(${PROJECT_NAME} INTERFACE 
++        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/FSeam>
++        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+ 
+ include(GNUInstallDirs)
+ include(CMakePackageConfigHelpers)
+ 
+-install(TARGETS FSeam FSeam-static
+-        EXPORT ${PROJECT_NAME}-targets)
+-
+-install(FILES ${FSEAM_HEADERS} DESTINATION share/include/FSeam)
+-install(PROGRAMS ${FSEAM_GENERATOR_PYTH} DESTINATION share/bin)
+-install(PROGRAMS ${FSEAM_GENERATOR_PYTH} DESTINATION bin)
+-
+-# GNUInstallDirs "DATADIR" wrong here; CMake search path wants "share".
+-set(FSEAM_CMAKECONFIG_INSTALL_DIR "share/cmake/${PROJECT_NAME}" CACHE STRING "install path for FSeamConfig.cmake")
+-
+-export(EXPORT ${PROJECT_NAME}-targets
+-     FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
++set(FSEAM_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME} CACHE STRING
++        "Installation directory for cmake files, relative to ${CMAKE_INSTALL_PREFIX}.")
++set(FSEAM_INC_DIR ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME} CACHE STRING
++        "Installation directory for include files, relative to ${CMAKE_INSTALL_PREFIX}.")
++set(FSEAM_PROGRAMS_DIR ${CMAKE_INSTALL_BINDIR} CACHE STRING
++        "Installation directory for python files, relative to ${CMAKE_INSTALL_PREFIX}.")
+ 
+ configure_package_config_file(${PROJECT_NAME}Config.cmake.in
+-                        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+-                        INSTALL_DESTINATION ${FSEAM_CMAKECONFIG_INSTALL_DIR})
+-
++        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
++        INSTALL_DESTINATION ${FSEAM_CMAKE_DIR})
+ write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+-                        VERSION ${FSEAM_VERSION}                        
+-                        COMPATIBILITY AnyNewerVersion)
++        VERSION ${FSEAM_VERSION}                        
++        COMPATIBILITY AnyNewerVersion)
+ 
++install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
+ install(EXPORT ${PROJECT_NAME}-targets
+-		NAMESPACE FSeam::
+-        FILE ${PROJECT_NAME}Targets.cmake
+-        DESTINATION ${FSEAM_CMAKECONFIG_INSTALL_DIR})
+-
+-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+-              ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+-        DESTINATION ${FSEAM_CMAKECONFIG_INSTALL_DIR})
++        NAMESPACE ${PROJECT_NAME}::
++        DESTINATION ${FSEAM_CMAKE_DIR}
++        FILE ${PROJECT_NAME}Targets.cmake)
++install(FILES ${FSEAM_HEADERS}
++        DESTINATION ${FSEAM_INC_DIR})
++install(PROGRAMS ${FSEAM_GENERATOR_PYTH}
++        DESTINATION ${FSEAM_PROGRAMS_DIR})
++install(FILES 
++                ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
++                ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
++        DESTINATION ${FSEAM_CMAKE_DIR})
+ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FSeamModule.cmake
+-        DESTINATION ${FSEAM_CMAKECONFIG_INSTALL_DIR})
++        DESTINATION ${FSEAM_CMAKE_DIR})
+ 
+  option(FSEAM_BUILD_TESTS "Whether or not to build the tests" ON)
+  if (FSEAM_BUILD_TESTS)
+-- 
+2.18.4
+
